@@ -1,16 +1,15 @@
 - name: Install redis and dependencies
   apt: name={{ item }} state=present
   with_items:
-    - redis
+    - redis-server
     - ruby1.9.1
     - ruby1.9.1-dev
-    - rubygems
     - git
     - g++
     - make
 
 - name: Install redmon and dependencies
-  action: gem name={{ item }} state present user_install=no
+  action: gem name={{ item }} state=present user_install=no
   with_items:
     - bundler
     - redmon
