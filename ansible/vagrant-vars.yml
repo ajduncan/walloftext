@@ -1,0 +1,12 @@
+vagrant: true
+locale: en_US.UTF-8
+user_name: vagrant
+user_directory: /home/{{ user_name }}
+project_name: wot
+project_directory: /{{ user_name }}
+pm2_web_port: 8998
+
+hostname: localhost
+dbuser: wot
+dbname: wot
+dbpassword: wot
