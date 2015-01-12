@@ -1,3 +1,0 @@
-# wot
-
-Wall of Text
