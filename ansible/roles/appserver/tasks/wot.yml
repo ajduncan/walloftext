@@ -1,6 +1,12 @@
 - name: Install (global) grunt-cli
   npm: name=grunt-cli global=yes
 
+- name: Install (global) bower
+  npm: name=bower global=yes
+
+- name: Ensure front-end depdendency folder exists
+  action: file state=directory path={{ project_directory }}/{{ project_name }}/public/components
+
 - name: Install project (local npm) dependencies
   npm: path={{ project_directory }}/wot
   sudo: yes
@@ -8,5 +14,12 @@
 
 - name: Ensure grunt build
   command: grunt build
+  args:
+    chdir: "{{ project_directory }}/{{ project_name }}"
+
+- name: Ensure bower Install
+  command: bower install
+  sudo: yes
+  sudo_user: "{{ user_name }}"
   args:
     chdir: "{{ project_directory }}/{{ project_name }}"
