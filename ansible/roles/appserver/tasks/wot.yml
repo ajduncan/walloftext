@@ -1,4 +1,12 @@
+- name: Install (global) grunt-cli
+  npm: name=grunt-cli global=yes
+
 - name: Install project (local npm) dependencies
   npm: path={{ project_directory }}/wot
   sudo: yes
   sudo_user: "{{ user_name }}"
+
+- name: Ensure grunt build
+  command: grunt build
+  args:
+    chdir: "{{ project_directory }}/{{ project_name }}"

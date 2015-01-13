@@ -1,3 +1,9 @@
+- name: Install (global) pm2
+  npm: name=pm2 global=yes
+
+- name: Install (global) pm2-web
+  npm: name=pm2-web global=yes
+
 - name: Ensure pm2-web config directory exists.
   sudo: yes
   action: file state=directory path=/etc/pm2-web
@@ -5,6 +11,9 @@
 - name: Install pm2-web config.json file.
   sudo: yes
   template: src=pm2-web.config.json.j2 dest=/etc/pm2-web/config.json
+
+- name: Ensure pm2 log folder exists
+  action: file state=directory path={{ log_directory }}
 
 - name: Start pm2 web monitor.
   sudo: yes
