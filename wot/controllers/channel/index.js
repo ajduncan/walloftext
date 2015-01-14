@@ -1,8 +1,11 @@
 'use strict';
 
-var channel = require('../../models/channel');
+var ChannelModel = require('../../models/channel');
 
 module.exports = function (router) {
+
+    var model = new ChannelModel();
+
     router.get('/', function (req, res) {
         res.send('You are at the main channel index.');
     });
@@ -14,7 +17,7 @@ module.exports = function (router) {
 
     router.get('/:channel', function(req, res) {
         var channel_name = req.params.channel;
-        res.send('you are at the ' + channel_name + ' channel');
-
+        model.name = channel_name;
+        res.render('channel', model);
     });
 };
