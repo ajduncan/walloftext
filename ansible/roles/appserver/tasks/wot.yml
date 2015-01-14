@@ -12,14 +12,14 @@
   sudo: yes
   sudo_user: "{{ user_name }}"
 
-- name: Ensure grunt build
-  command: grunt build
-  args:
-    chdir: "{{ project_directory }}/{{ project_name }}"
-
 - name: Ensure bower Install
   command: bower install
   sudo: yes
   sudo_user: "{{ user_name }}"
+  args:
+    chdir: "{{ project_directory }}/{{ project_name }}"
+
+- name: Ensure grunt build
+  command: grunt build
   args:
     chdir: "{{ project_directory }}/{{ project_name }}"
