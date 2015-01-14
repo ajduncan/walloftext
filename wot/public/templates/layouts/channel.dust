@@ -32,7 +32,7 @@
 <script src="/components/jquery/dist/jquery.js"></script>
 <!-- Include all compiled plugins (below), or include individual files as needed -->
 <script src="/components/bootstrap/dist/js/bootstrap.min.js"></script>
-
 <script src="/js/app.js"></script>
+<script src="/js/canvas.js"></script>
 </body>
 </html>
