@@ -10,8 +10,8 @@ Vagrant.configure("2") do |config|
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
   end
-
   config.vm.network "forwarded_port", guest: 8000, host: 8000
+  config.vm.network "forwarded_port", guest: 4000, host: 4000
   require 'rbconfig'
   config.vm.provision "shell" do |sh|
     sh.path = "ansible/ansible.sh"

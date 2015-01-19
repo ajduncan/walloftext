@@ -1,7 +1,12 @@
 'use strict';
 
-(function() {
-    var canvas = document.getElementById('channel');
-    var context = canvas.getContext('2d');
-
-})();
+// global container for front-end happy making.
+window.WOT = {
+    Canvas: {},
+    Models: {},
+    Collections: {},
+    Views: {},
+    Settings: {},
+    Listeners: {},
+    Functions: {}
+};
