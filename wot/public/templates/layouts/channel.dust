@@ -30,7 +30,7 @@
     {+body /}
 </div>
 <script src="/components/jquery/dist/jquery.js"></script>
-<script src="/components/jquery.dragger/dist/jquery.dragger.js"></script>
+<script src="/components/jcanvas/jcanvas.min.js"></script>
 <script src="/components/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/canvas.js"></script>

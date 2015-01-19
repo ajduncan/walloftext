@@ -27,15 +27,24 @@ window.WOT.Canvas = function () {
 window.WOT.Canvas.prototype = {
     renderCanvas: function (x, y) {
         // redis magic x,y position
-        this.context.fillStyle = "blue";
-        this.context.font = "bold 16px Arial";
-        this.context.fillText(this.channel_name, this.canvas.width/2, this.canvas.height/2);
+        // stub for now
+        $('#channel').addLayer({
+          type: 'text',
+          fillStyle: '#585',
+          draggable: true,
+          x: x, 
+          y: y,
+          fontSize: 48,
+          fontFamily: 'Verdana, sans-serif',
+          text: this.channel_name
+        })
+        .drawLayers();
     },
 
     resizeCanvas: function () {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight / 2;
-        this.renderCanvas(0, 0);
+        this.renderCanvas(this.canvas.width/2, this.canvas.height/2);
     },
 
     draw: function (x, y, type) {
