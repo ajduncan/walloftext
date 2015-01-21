@@ -11,7 +11,7 @@
     "watch"       : true,
     "cwd"         : "/vagrant/wot",
     "env": {
-        "NODE_ENV": "production",
+        "NODE_ENV": "development",
         "NODE_PATH": "/vagrant/wot"
     }
   }]
