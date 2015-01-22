@@ -15,6 +15,6 @@
 <script src="/components/node-uuid/uuid.js"></script>
 <script src="/components/jcanvas/jcanvas.min.js"></script>
 <script src="/js/app.js"></script>
-<script src="/js/canvas.js"></script>
+<script src="/js/wall.js"></script>
 </body>
 </html>

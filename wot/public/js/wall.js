@@ -2,15 +2,15 @@
 
 window.WOT = window.WOT || {};
 
-// Channel wall
+// wall wall
 
 window.WOT.Wall = function () {
-    this.channel = document.getElementById("channel");
-    this.channel_name = this.channel.getAttribute('name');
+    this.wall = document.getElementById("wall");
+    this.wall_name = this.wall.getAttribute('name');
     this.editorTimer = '';
     this.last_ta_brick = '';
 
-    this.resizeChannel();
+    this.resizewall();
     this.handleEvents();
 }
 
@@ -19,31 +19,33 @@ window.WOT.Wall.prototype = {
     handleEvents: function () {
         var self = this;
 
-        window.addEventListener('resize', this.resizeChannel.bind(this), false);
-        this.channel.addEventListener('click', this.insertText.bind(this), false);
+        window.addEventListener('resize', this.resizewall.bind(this), false);
+        this.wall.addEventListener('click', this.insertText.bind(this), false);
         $('#editor').click(function (e) { e.stopPropagation(); });
         $('#editor').blur(function () {
-            $(this).val().length > 0 ? console.log('Saving...') : $(self.last_ta_brick).remove();
+            var id = $(self.last_ta_brick).attr('id');
+            $(this).val().length > 0 ? self.updateBrick(id) : self.removeBrick(id);
         });
     },
 
-    updateBrick: function () {
-
+    updateBrick: function (id) {
+        console.log('Saving brick with id: ' + id);
     },
 
-    removeBrick: function () {
-
+    removeBrick: function (id) {
+        console.log('Removing brick with id: ' + id);
+        $(this.last_ta_brick).remove();
     },
 
-    renderChannel: function (x, y) {
+    renderwall: function (x, y) {
         // redis magic x,y position
         // stub for now
     },
 
-    resizeChannel: function () {
-        this.channel.width = window.innerWidth;
-        this.channel.height = window.innerHeight / 2;
-        this.renderChannel(this.channel.width/2, this.channel.height/2);
+    resizewall: function () {
+        this.wall.width = window.innerWidth;
+        this.wall.height = window.innerHeight / 2;
+        this.renderwall(this.wall.width/2, this.wall.height/2);
     },
 
     insertText: function(event) {
@@ -52,15 +54,15 @@ window.WOT.Wall.prototype = {
         var uuid_id = uuid.v1();
         var self = this;
 
-        x -= this.channel.offsetLeft + 10;
-        y -= this.channel.offsetTop + 20;
+        x -= this.wall.offsetLeft + 10;
+        y -= this.wall.offsetTop + 20;
 
         console.log('x: ' + x + ', y: ' + y);
 
         $('#editor').css({"visibility": "visible"});
 
         var ta_brick = $('<pre id="' + uuid_id + '"></pre>')
-        $('#channel').append(ta_brick);
+        $('#wall').append(ta_brick);
         this.last_ta_brick = ta_brick;
         self.moveEditor(x, y, uuid_id);
 
@@ -76,19 +78,12 @@ window.WOT.Wall.prototype = {
             }
         });
 
-        ta_brick.bind('click', function(e) {
+        ta_brick.on('click', function(e) {
             e.stopPropagation();
 
-            var x = event.x;
-            var y = event.y;
+            var x = $(this).position().left;
+            var y = $(this).position().top;
             var id = $(this).attr('id');
-            var text = $(this).text();
-
-            x -= 10;
-            y -= 38; // WHY
-
-            // x -= self.channel.offsetLeft + 10;
-            // y -= self.channel.offsetTop + 20;
 
             self.moveEditor(x, y, id);
         });
@@ -107,6 +102,8 @@ window.WOT.Wall.prototype = {
         $('#editor').focus();
 
         $('#editor').css({"top": y + "px", "left": x + "px", "visibility": "visible"});
+        console.log('Editor css x: ' + x + ', y: ' + y);
+
         $('#editor').keyup(function () {
             var text = $('#editor').val();
             var brick = document.getElementById(id);
@@ -136,9 +133,9 @@ window.WOT.Wall.prototype = {
 // Canvas related
 
 window.WOT.Canvas = function () {
-    this.canvas = document.getElementById("channel_canvas");
+    this.canvas = document.getElementById("wall_canvas");
     this.context = this.canvas.getContext("2d");
-    this.channel_name = this.canvas.getAttribute('name');
+    this.wall_name = this.canvas.getAttribute('name');
 
     this.context.fillStyle = "solid";
     this.context.strokeStyle = "#ECD018";
@@ -163,7 +160,7 @@ window.WOT.Canvas.prototype = {
     renderCanvas: function (x, y) {
         // redis magic x,y position
         // stub for now
-        $('#channel').addLayer({
+        $('#wall').addLayer({
             type: 'text',
             fillStyle: '#585',
             draggable: true,
@@ -171,7 +168,7 @@ window.WOT.Canvas.prototype = {
             y: y,
             fontSize: 48,
             fontFamily: 'Verdana, sans-serif',
-            text: this.channel_name
+            text: this.wall_name
         }).drawLayers();
     },
 
@@ -189,7 +186,7 @@ window.WOT.Canvas.prototype = {
         x -= this.canvas.offsetLeft;
         y -= this.canvas.offsetTop;
 
-        $('#channel').addLayer({
+        $('#wall').addLayer({
             type: 'text',
             fillStyle: '#585',
             draggable: true,

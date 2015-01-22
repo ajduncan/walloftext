@@ -10,7 +10,7 @@ module.exports = function browserify(grunt) {
 		build: {
 			files: {
 				'.build/js/app.js': ['public/js/app.js'],
-				'.build/js/canvas.js': ['public/js/canvas.js'],
+				'.build/js/wall.js': ['public/js/wall.js'],
 			},
 			options: {}
 		}

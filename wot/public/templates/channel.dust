@@ -1,9 +1,0 @@
-{>"layouts/channel" /}
-
-{<body}
-<div id="window">
-    <a href="/">Home</a>
-    <div id="channel" name="{name}"><textarea id="editor"></textarea></div>
-</div>
-<!-- <canvas id="channel_canvas" name="{name}" width="100%" height="500" style="border: 1px solid #000;"></canvas> -->
-{/body}
