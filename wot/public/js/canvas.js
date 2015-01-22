@@ -8,15 +8,33 @@ window.WOT.Wall = function () {
     this.channel = document.getElementById("channel");
     this.channel_name = this.channel.getAttribute('name');
     this.editorTimer = '';
+    this.last_ta_brick = '';
 
     this.resizeChannel();
-    window.addEventListener('resize', this.resizeChannel.bind(this), false);
-    this.channel.addEventListener('click', this.insertText.bind(this), false);
-    $('#editor').click(function (e) { e.stopPropagation(); });
+    this.handleEvents();
 }
 
 
 window.WOT.Wall.prototype = {
+    handleEvents: function () {
+        var self = this;
+
+        window.addEventListener('resize', this.resizeChannel.bind(this), false);
+        this.channel.addEventListener('click', this.insertText.bind(this), false);
+        $('#editor').click(function (e) { e.stopPropagation(); });
+        $('#editor').blur(function () {
+            $(this).val().length > 0 ? console.log('Saving...') : $(self.last_ta_brick).remove();
+        });
+    },
+
+    updateBrick: function () {
+
+    },
+
+    removeBrick: function () {
+
+    },
+
     renderChannel: function (x, y) {
         // redis magic x,y position
         // stub for now
@@ -34,18 +52,20 @@ window.WOT.Wall.prototype = {
         var uuid_id = uuid.v1();
         var self = this;
 
-        x -= this.channel.offsetLeft;
-        y -= this.channel.offsetTop;
+        x -= this.channel.offsetLeft + 10;
+        y -= this.channel.offsetTop + 20;
 
         console.log('x: ' + x + ', y: ' + y);
 
-        $('#editor').css({"visibility": "hidden"});
+        $('#editor').css({"visibility": "visible"});
 
-        var ta_node = $('<pre id="' + uuid_id + '"><span>...!</span></pre>')
-        $('#channel').append(ta_node);
+        var ta_brick = $('<pre id="' + uuid_id + '"></pre>')
+        $('#channel').append(ta_brick);
+        this.last_ta_brick = ta_brick;
+        self.moveEditor(x, y, uuid_id);
 
-        ta_node.css({"top": y + "px", "left": x + "px", "visibility": "visible"});
-        ta_node.draggable({
+        ta_brick.css({"top": y + "px", "left": x + "px", "visibility": "visible"});
+        ta_brick.draggable({
             containment: 'parent',
             cancel: uuid_id,
             start: function () {
@@ -56,34 +76,60 @@ window.WOT.Wall.prototype = {
             }
         });
 
-        ta_node.bind('click', function(e) {
-            console.log('clicked!');
+        ta_brick.bind('click', function(e) {
             e.stopPropagation();
+
             var x = event.x;
             var y = event.y;
             var id = $(this).attr('id');
+            var text = $(this).text();
 
-            x -= self.channel.offsetLeft;
-            y -= self.channel.offsetTop;
+            x -= 10;
+            y -= 38; // WHY
 
-            $('#editor').text(ta_node.text());
-            $('#editor').css({"top": y + "px", "left": x + "px", "visibility": "visible"});
-            // $('#editor').unbind('keyup');
-            $('#editor').keyup(function () {
-                clearTimeout(self.editorTimer);
-                self.editorTimer = setTimeout(self.saveEditor(id), 5000);
-            });
-            $('#editor').keydown(function () {
-                clearTimeout(self.editorTimer);
-            });
+            // x -= self.channel.offsetLeft + 10;
+            // y -= self.channel.offsetTop + 20;
 
+            self.moveEditor(x, y, id);
         });
+    },
+
+    moveEditor: function (x, y, id) {
+        var self = this;
+        var brick = document.getElementById(id);
+        var rect = brick.getBoundingClientRect();
+        var width = (rect.width > 0 ? rect.width : 14);
+        var height = (rect.height > 0 ? rect.height : 14);
+
+        $('#editor').val($('#' + id).text());
+        $('#editor').unbind('keyup');
+        $('#editor').css({'width': width + 'px', 'height': height + 'px'});
+        $('#editor').focus();
+
+        $('#editor').css({"top": y + "px", "left": x + "px", "visibility": "visible"});
+        $('#editor').keyup(function () {
+            var text = $('#editor').val();
+            var brick = document.getElementById(id);
+            var rect = brick.getBoundingClientRect();
+            var width = (rect.width > 0 ? rect.width : 14);
+            var height = (rect.height > 0 ? rect.height : 14);
+
+            $('#editor').css({'width': width + 'px', 'height': height + 'px'});
+            clearTimeout(self.editorTimer);
+            self.editorTimer = setTimeout(self.saveEditor(id), 1000);
+        });
+        $('#editor').keydown(function () {
+            clearTimeout(self.editorTimer);
+        });
+
     },
 
     saveEditor: function (id) {
         var text = $('#editor').val();
+        var brick_text = '<span>' + text + '</span>';
         console.log('Got save editor target id: ' + id + ', value: ' + text);
-        $('#' + id).html('<span>' + text + '</span>');
+        $('#' + id).html(brick_text);
+        // $('#editor').css({'width': (text.length * 14) + 'px'});
     }
 }
 
@@ -121,7 +167,7 @@ window.WOT.Canvas.prototype = {
             type: 'text',
             fillStyle: '#585',
             draggable: true,
-            x: x, 
+            x: x,
             y: y,
             fontSize: 48,
             fontFamily: 'Verdana, sans-serif',
@@ -147,12 +193,12 @@ window.WOT.Canvas.prototype = {
             type: 'text',
             fillStyle: '#585',
             draggable: true,
-            x: x, 
+            x: x,
             y: y,
             fontSize: 48,
             fontFamily: 'Verdana, sans-serif',
             text: 'Hello!',
-            
+
             click: function(layer) {
                 layer.text = 'hhhhhhherp';
                 console.log('herp click');
@@ -178,5 +224,5 @@ window.WOT.Canvas.prototype = {
 }
 
 
-var wot_canvas = new window.WOT.Canvas();
+// var wot_canvas = new window.WOT.Canvas();
 var wot = new window.WOT.Wall();
