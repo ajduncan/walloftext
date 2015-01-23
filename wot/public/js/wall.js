@@ -14,7 +14,7 @@ window.WOT.Wall = function () {
     this.bugshit = 0;
 
     // configuration of the observer:
-    this.observerConfig = { /* attributes: true, */ childList: true, characterData: true, subtree: true };
+    this.observerConfig = { attributes: true, childList: true, characterData: true, subtree: true };
 
     // create an observer instance
     this.observer = new MutationObserver(function(mutations) {
