@@ -21,8 +21,19 @@ server.on('listening', function () {
  */
 
 io.sockets.on('connection', function(socket) {
+
+    socket.on('subscribe', function(wall) { 
+        console.log('Joining wall: ' + wall);
+        socket.join(wall); 
+    });
+
+    socket.on('unsubscribe', function(wall) {  
+        console.log('Leaving wall: ' + wall);
+        socket.leave(wall); 
+    });
+
     socket.on('brickadd', function(data) {
-        socket.broadcast.emit('bbrickadd', {
+        socket.broadcast.to(data.wall).emit('bbrickadd', {
             id: data.id,
             x: data.x,
             y: data.y,
@@ -31,13 +42,13 @@ io.sockets.on('connection', function(socket) {
     });
 
     socket.on('brickremove', function(data) {
-        socket.broadcast.emit('bbrickremove', {
+        socket.broadcast.to(data.wall).emit('bbrickremove', {
             id: data.id
         });
     });
 
     socket.on('brickupdate', function(data) {
-        socket.broadcast.emit('bbrickupdate', {
+        socket.broadcast.to(data.wall).emit('bbrickupdate', {
             id: data.id,
             x: data.x,
             y: data.y,

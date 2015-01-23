@@ -26,12 +26,16 @@ window.WOT.Wall = function () {
                 // console.log('brick html: ' + $(mutation.target).html() );
                 console.log('brick id: ' + id + ', x: ' + x + ', y: ' + y);
                 // emit serialized (fix!) brick updates.
+                // we should only send at most one update per second...
+                /*
                 self.websocket.emit('brickupdate', {
+                    wall: self.wall_name,
                     id: id,
                     x: x,
                     y: y,
                     text: brick.html()
                 });
+                */
             }
         });
     });
@@ -43,17 +47,21 @@ window.WOT.Wall = function () {
     this.observer.observe(target, this.observerConfig);
 
     this.websocket = io.connect('http://localhost:4000');
+    this.websocket.emit('subscribe', this.wall_name);
 
     this.websocket.on('bbrickadd', function(data) {
-        console.log('Got add broadcast for brick: ' + data.id);
+        console.log('Got add broadcast for brick: ' + data.id + ', x: ' + data.x + ', y: ' + data.y);
+        self.bbrickAdd(data.x, data.y, data.id, data.text);
     });
 
     this.websocket.on('bbrickupdate', function(data) {
         console.log('Got update broadcast for brick: ' + data.id);
+        self.bbrickUpdate(data.x, data.y, data.id, data.text);
     });
 
     this.websocket.on('bbrickremove', function(data) {
         console.log('Got remove broadcast for brick: ' + data.id);
+        self.bbrickRemove(data.id);
     });
 
     this.resizeWall();
@@ -82,6 +90,7 @@ window.WOT.Wall.prototype = {
         console.log('Removing brick with id: ' + id);
         $(this.last_ta_brick).remove();
         this.websocket.emit('brickremove', {
+            wall: self.wall_name,
             id: id
         });
     },
@@ -97,6 +106,49 @@ window.WOT.Wall.prototype = {
         this.renderWall(this.wall.width/2, this.wall.height/2);
     },
 
+    bbrickRemove: function(id) {
+        console.log('Removing brick with id: ' + id);
+        $('#' + id).remove();
+    },
+
+    bbrickUpdate: function(x, y, id, text) {
+        var self = this;
+
+        var ta_brick = $('#' + id);
+        ta_brick.css({"top": y + "px", "left": x + "px", "visibility": "visible"});
+        ta_brick.val(text);
+    },
+
+    bbrickAdd: function (x, y, id, text) {
+        var self = this;
+
+        var ta_brick = $('<pre id="' + id + '">TEST' + text + '</pre>');
+        ta_brick.attr('name', 'brick');
+        $('#wall').append(ta_brick);
+
+        ta_brick.css({"top": y + "px", "left": x + "px", "visibility": "visible"});
+        ta_brick.draggable({
+            containment: 'parent',
+            cancel: id,
+            start: function () {
+                this.focus();
+            },
+            stop: function () {
+                this.focus();
+            }
+        });
+
+        ta_brick.on('click', function(e) {
+            e.stopPropagation();
+
+            var x = $(this).position().left;
+            var y = $(this).position().top;
+            var id = $(this).attr('id');
+
+            self.moveEditor(x, y, id);
+        });
+    },
+
     addBrick: function(event) {
         var x = event.x;
         var y = event.y;
@@ -108,14 +160,17 @@ window.WOT.Wall.prototype = {
 
         $('#editor').css({"visibility": "visible"});
 
-        var ta_brick = $('<pre id="' + uuid_id + '"></pre>')
+        var ta_brick = $('<pre id="' + uuid_id + '"></pre>');
         ta_brick.attr('name', 'brick');
         $('#wall').append(ta_brick);
         this.last_ta_brick = ta_brick;
         self.moveEditor(x, y, uuid_id);
 
         this.websocket.emit('brickadd', {
-            id: uuid_id
+            wall: self.wall_name,
+            id: uuid_id,
+            x: x,
+            y: y
         });
 
         ta_brick.css({"top": y + "px", "left": x + "px", "visibility": "visible"});
