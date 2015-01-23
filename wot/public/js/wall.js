@@ -10,7 +10,37 @@ window.WOT.Wall = function () {
     this.editorTimer = '';
     this.last_ta_brick = '';
 
-    this.resizewall();
+    // configuration of the observer:
+    this.observerConfig = { attributes: true, childList: true, characterData: true, subtree: true };
+
+    // create an observer instance
+    this.observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            console.log('Got mutation type: ' + mutation.type);
+            if ($(mutation.target).attr('name') == 'brick') {
+                var brick = $(mutation.target);
+                var x = brick.position().left;
+                var y = brick.position().top;
+                var id = brick.attr('id');
+                // console.log('brick html: ' + $(mutation.target).html() );
+                console.log('brick id: ' + id + ', x: ' + x + ', y: ' + y);
+                // emit serialized brick updates.
+            }
+        });
+    });
+
+    // observe the brick:
+    var target = document.querySelector('#wall');
+
+    // pass in the target node, as well as the observer options
+    this.observer.observe(target, this.observerConfig);
+
+    this.websocket = io.connect('http://localhost:4000');
+    this.websocket.on('draw', function(data) {
+      return this.draw(data.x, data.y, data.type);
+    });
+
+    this.resizeWall();
     this.handleEvents();
 }
 
@@ -19,8 +49,8 @@ window.WOT.Wall.prototype = {
     handleEvents: function () {
         var self = this;
 
-        window.addEventListener('resize', this.resizewall.bind(this), false);
-        this.wall.addEventListener('click', this.insertText.bind(this), false);
+        window.addEventListener('resize', this.resizeWall.bind(this), false);
+        this.wall.addEventListener('click', this.addBrick.bind(this), false);
         $('#editor').click(function (e) { e.stopPropagation(); });
         $('#editor').blur(function () {
             var id = $(self.last_ta_brick).attr('id');
@@ -37,18 +67,18 @@ window.WOT.Wall.prototype = {
         $(this.last_ta_brick).remove();
     },
 
-    renderwall: function (x, y) {
+    renderWall: function (x, y) {
         // redis magic x,y position
         // stub for now
     },
 
-    resizewall: function () {
+    resizeWall: function () {
         this.wall.width = window.innerWidth;
         this.wall.height = window.innerHeight / 2;
-        this.renderwall(this.wall.width/2, this.wall.height/2);
+        this.renderWall(this.wall.width/2, this.wall.height/2);
     },
 
-    insertText: function(event) {
+    addBrick: function(event) {
         var x = event.x;
         var y = event.y;
         var uuid_id = uuid.v1();
@@ -57,11 +87,10 @@ window.WOT.Wall.prototype = {
         x -= this.wall.offsetLeft + 10;
         y -= this.wall.offsetTop + 20;
 
-        console.log('x: ' + x + ', y: ' + y);
-
         $('#editor').css({"visibility": "visible"});
 
         var ta_brick = $('<pre id="' + uuid_id + '"></pre>')
+        ta_brick.attr('name', 'brick');
         $('#wall').append(ta_brick);
         this.last_ta_brick = ta_brick;
         self.moveEditor(x, y, uuid_id);
@@ -87,6 +116,7 @@ window.WOT.Wall.prototype = {
 
             self.moveEditor(x, y, id);
         });
+
     },
 
     moveEditor: function (x, y, id) {
@@ -100,9 +130,7 @@ window.WOT.Wall.prototype = {
         $('#editor').unbind('keyup');
         $('#editor').css({'width': width + 'px', 'height': height + 'px'});
         $('#editor').focus();
-
         $('#editor').css({"top": y + "px", "left": x + "px", "visibility": "visible"});
-        console.log('Editor css x: ' + x + ', y: ' + y);
 
         $('#editor').keyup(function () {
             var text = $('#editor').val();
@@ -124,9 +152,7 @@ window.WOT.Wall.prototype = {
     saveEditor: function (id) {
         var text = $('#editor').val();
         var brick_text = '<span>' + text + '</span>';
-        console.log('Got save editor target id: ' + id + ', value: ' + text);
         $('#' + id).html(brick_text);
-        // $('#editor').css({'width': (text.length * 14) + 'px'});
     }
 }
 
