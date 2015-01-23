@@ -10,24 +10,26 @@ window.WOT.Wall = function () {
     this.wall_name = this.wall.getAttribute('name');
     this.editorTimer = '';
     this.last_ta_brick = '';
+    this.active_brick_id = '0';
+    this.bugshit = 0;
 
     // configuration of the observer:
-    this.observerConfig = { attributes: true, childList: true, characterData: true, subtree: true };
+    this.observerConfig = { /* attributes: true, */ childList: true, characterData: true, subtree: true };
 
     // create an observer instance
     this.observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
-            console.log('Got mutation type: ' + mutation.type);
-            if ($(mutation.target).attr('name') == 'brick') {
+            if (
+                ($(mutation.target).attr('name') == 'brick') &&
+                (self.bugshit <= 1000) // trap while debugging.
+            ) {
                 var brick = $(mutation.target);
                 var x = brick.position().left;
                 var y = brick.position().top;
                 var id = brick.attr('id');
-                // console.log('brick html: ' + $(mutation.target).html() );
-                console.log('brick id: ' + id + ', x: ' + x + ', y: ' + y);
-                // emit serialized (fix!) brick updates.
-                // we should only send at most one update per second...
-                /*
+                console.log('brick id: ' + id + ', x: ' + x + ', y: ' + y + ' text: ' + brick.html());
+                console.log('target: ' + $(mutation.target).attr('id') + ', active brick: ' + self.active_brick_id);
+                self.bugshit += 1;
                 self.websocket.emit('brickupdate', {
                     wall: self.wall_name,
                     id: id,
@@ -35,7 +37,6 @@ window.WOT.Wall = function () {
                     y: y,
                     text: brick.html()
                 });
-                */
             }
         });
     });
@@ -55,8 +56,10 @@ window.WOT.Wall = function () {
     });
 
     this.websocket.on('bbrickupdate', function(data) {
-        console.log('Got update broadcast for brick: ' + data.id);
-        self.bbrickUpdate(data.x, data.y, data.id, data.text);
+        if (data.id != self.active_brick_id) {
+            console.log('Got update broadcast for brick: ' + data.id + ' text: ' + data.text);
+            self.bbrickUpdate(data.x, data.y, data.id, data.text);
+        }
     });
 
     this.websocket.on('bbrickremove', function(data) {
@@ -116,13 +119,13 @@ window.WOT.Wall.prototype = {
 
         var ta_brick = $('#' + id);
         ta_brick.css({"top": y + "px", "left": x + "px", "visibility": "visible"});
-        ta_brick.val(text);
+        ta_brick.html(text);
     },
 
     bbrickAdd: function (x, y, id, text) {
         var self = this;
 
-        var ta_brick = $('<pre id="' + id + '">TEST' + text + '</pre>');
+        var ta_brick = $('<pre id="' + id + '">' + text + '</pre>');
         ta_brick.attr('name', 'brick');
         $('#wall').append(ta_brick);
 
@@ -131,9 +134,11 @@ window.WOT.Wall.prototype = {
             containment: 'parent',
             cancel: id,
             start: function () {
+                self.active_brick_id = id;
                 this.focus();
             },
             stop: function () {
+                self.active_brick_id = '0';
                 this.focus();
             }
         });
@@ -164,6 +169,7 @@ window.WOT.Wall.prototype = {
         ta_brick.attr('name', 'brick');
         $('#wall').append(ta_brick);
         this.last_ta_brick = ta_brick;
+        this.active_brick_id = uuid_id;
         self.moveEditor(x, y, uuid_id);
 
         this.websocket.emit('brickadd', {
@@ -178,9 +184,11 @@ window.WOT.Wall.prototype = {
             containment: 'parent',
             cancel: uuid_id,
             start: function () {
+                self.active_brick_id = uuid_id;
                 this.focus();
             },
             stop: function () {
+                self.active_brick_id = '0';
                 this.focus();
             }
         });
@@ -219,10 +227,12 @@ window.WOT.Wall.prototype = {
 
             $('#editor').css({'width': width + 'px', 'height': height + 'px'});
             clearTimeout(self.editorTimer);
+            self.active_brick_id = id;
             self.editorTimer = setTimeout(self.saveEditor(id), 1000);
         });
         $('#editor').keydown(function () {
             clearTimeout(self.editorTimer);
+            self.active_brick_id = '0';
         });
 
     },
@@ -234,96 +244,4 @@ window.WOT.Wall.prototype = {
     }
 }
 
-// Canvas related
-
-window.WOT.Canvas = function () {
-    this.canvas = document.getElementById("wall_canvas");
-    this.context = this.canvas.getContext("2d");
-    this.wall_name = this.canvas.getAttribute('name');
-
-    this.context.fillStyle = "solid";
-    this.context.strokeStyle = "#ECD018";
-    this.context.lineWidth = 5;
-    this.context.lineCap = "round";
-
-    this.websocket = io.connect('http://localhost:4000');
-    this.websocket.on('draw', function(data) {
-      return this.draw(data.x, data.y, data.type);
-    });
-
-    // resize the canvas to fill browser window dynamically
-    this.resizeCanvas();
-    window.addEventListener('resize', this.resizeCanvas.bind(this), false);
-
-    this.canvas.addEventListener('dblclick', this.insertTextLayer.bind(this), false);
-
-};
-
-
-window.WOT.Canvas.prototype = {
-    renderCanvas: function (x, y) {
-        // redis magic x,y position
-        // stub for now
-        $('#wall').addLayer({
-            type: 'text',
-            fillStyle: '#585',
-            draggable: true,
-            x: x,
-            y: y,
-            fontSize: 48,
-            fontFamily: 'Verdana, sans-serif',
-            text: this.wall_name
-        }).drawLayers();
-    },
-
-    resizeCanvas: function () {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight / 2;
-        this.renderCanvas(this.canvas.width/2, this.canvas.height/2);
-    },
-
-    insertTextLayer: function(event) {
-        console.log('got a click event on the canvas');
-        var x = event.x;
-        var y = event.y;
-
-        x -= this.canvas.offsetLeft;
-        y -= this.canvas.offsetTop;
-
-        $('#wall').addLayer({
-            type: 'text',
-            fillStyle: '#585',
-            draggable: true,
-            x: x,
-            y: y,
-            fontSize: 48,
-            fontFamily: 'Verdana, sans-serif',
-            text: 'Hello!',
-
-            click: function(layer) {
-                layer.text = 'hhhhhhherp';
-                console.log('herp click');
-            },
-
-            keydown: function(event) {
-                console.log('GOT A KEY!!!');
-            }
-        }).drawLayers();
-    },
-
-    draw: function (x, y, type) {
-        if (type === "dragstart") {
-            this.context.beginPath();
-            return context.moveTo(x, y);
-        } else if (type === "drag") {
-            this.context.lineTo(x, y);
-            return this.context.stroke();
-        } else {
-            return this.context.closePath();
-        }
-    }
-}
-
-
-// var wot_canvas = new window.WOT.Canvas();
 var wot = new window.WOT.Wall();
