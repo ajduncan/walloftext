@@ -21,7 +21,8 @@ window.WOT.Wall = function () {
         mutations.forEach(function(mutation) {
             if (
                 ($(mutation.target).attr('name') == 'brick') &&
-                (self.bugshit <= 1000) // trap while debugging.
+                ($(mutation.target).attr('id') != self.active_brick_id) &&
+                (self.bugshit <= 1000)
             ) {
                 var brick = $(mutation.target);
                 var x = brick.position().left;
@@ -138,8 +139,8 @@ window.WOT.Wall.prototype = {
                 this.focus();
             },
             stop: function () {
-                self.active_brick_id = '0';
                 this.focus();
+                self.active_brick_id = '0';
             }
         });
 
@@ -188,8 +189,8 @@ window.WOT.Wall.prototype = {
                 this.focus();
             },
             stop: function () {
-                self.active_brick_id = '0';
                 this.focus();
+                self.active_brick_id = '0';
             }
         });
 
