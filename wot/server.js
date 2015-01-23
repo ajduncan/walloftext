@@ -21,11 +21,28 @@ server.on('listening', function () {
  */
 
 io.sockets.on('connection', function(socket) {
-    socket.on('drawClick', function(data) {
-        socket.broadcast.emit('draw', {
+    socket.on('brickadd', function(data) {
+        socket.broadcast.emit('bbrickadd', {
+            id: data.id,
             x: data.x,
             y: data.y,
-            type: data.type
+            text: ''
         });
     });
+
+    socket.on('brickremove', function(data) {
+        socket.broadcast.emit('bbrickremove', {
+            id: data.id
+        });
+    });
+
+    socket.on('brickupdate', function(data) {
+        socket.broadcast.emit('bbrickupdate', {
+            id: data.id,
+            x: data.x,
+            y: data.y,
+            text: data.text
+        });
+    });
+
 });

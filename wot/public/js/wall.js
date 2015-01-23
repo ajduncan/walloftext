@@ -5,6 +5,7 @@ window.WOT = window.WOT || {};
 // wall wall
 
 window.WOT.Wall = function () {
+    var self = this;
     this.wall = document.getElementById("wall");
     this.wall_name = this.wall.getAttribute('name');
     this.editorTimer = '';
@@ -24,7 +25,13 @@ window.WOT.Wall = function () {
                 var id = brick.attr('id');
                 // console.log('brick html: ' + $(mutation.target).html() );
                 console.log('brick id: ' + id + ', x: ' + x + ', y: ' + y);
-                // emit serialized brick updates.
+                // emit serialized (fix!) brick updates.
+                self.websocket.emit('brickupdate', {
+                    id: id,
+                    x: x,
+                    y: y,
+                    text: brick.html()
+                });
             }
         });
     });
@@ -36,8 +43,17 @@ window.WOT.Wall = function () {
     this.observer.observe(target, this.observerConfig);
 
     this.websocket = io.connect('http://localhost:4000');
-    this.websocket.on('draw', function(data) {
-      return this.draw(data.x, data.y, data.type);
+
+    this.websocket.on('bbrickadd', function(data) {
+        console.log('Got add broadcast for brick: ' + data.id);
+    });
+
+    this.websocket.on('bbrickupdate', function(data) {
+        console.log('Got update broadcast for brick: ' + data.id);
+    });
+
+    this.websocket.on('bbrickremove', function(data) {
+        console.log('Got remove broadcast for brick: ' + data.id);
     });
 
     this.resizeWall();
@@ -65,6 +81,9 @@ window.WOT.Wall.prototype = {
     removeBrick: function (id) {
         console.log('Removing brick with id: ' + id);
         $(this.last_ta_brick).remove();
+        this.websocket.emit('brickremove', {
+            id: id
+        });
     },
 
     renderWall: function (x, y) {
@@ -94,6 +113,10 @@ window.WOT.Wall.prototype = {
         $('#wall').append(ta_brick);
         this.last_ta_brick = ta_brick;
         self.moveEditor(x, y, uuid_id);
+
+        this.websocket.emit('brickadd', {
+            id: uuid_id
+        });
 
         ta_brick.css({"top": y + "px", "left": x + "px", "visibility": "visible"});
         ta_brick.draggable({
