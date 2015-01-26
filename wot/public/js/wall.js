@@ -14,22 +14,34 @@ window.WOT.Wall = function () {
     this.bugshit = 0;
 
     // configuration of the observer:
-    this.observerConfig = { attributes: true, childList: true, characterData: true, subtree: true };
+    this.observerConfig = {
+        attributes: true,
+        childList: true,
+        characterData: true,
+        subtree: true,
+        /* bugshit */
+        attributeOldValue: true,
+        characterDataOldValue: true
+    };
 
     // create an observer instance
     this.observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
+            if (self.bugshit > 4000)
+                console.log('BUGSHIT!');
+
             if (
                 ($(mutation.target).attr('name') == 'brick') &&
-                ($(mutation.target).attr('id') != self.active_brick_id) &&
-                (self.bugshit <= 1000)
+                (self.bugshit <= 4000)
             ) {
                 var brick = $(mutation.target);
                 var x = brick.position().left;
                 var y = brick.position().top;
                 var id = brick.attr('id');
+
                 console.log('brick id: ' + id + ', x: ' + x + ', y: ' + y + ' text: ' + brick.html());
                 console.log('target: ' + $(mutation.target).attr('id') + ', active brick: ' + self.active_brick_id);
+                console.log('old value: ' + mutation.oldValue);
                 self.bugshit += 1;
                 self.websocket.emit('brickupdate', {
                     wall: self.wall_name,
@@ -52,8 +64,10 @@ window.WOT.Wall = function () {
     this.websocket.emit('subscribe', this.wall_name);
 
     this.websocket.on('bbrickadd', function(data) {
-        console.log('Got add broadcast for brick: ' + data.id + ', x: ' + data.x + ', y: ' + data.y);
-        self.bbrickAdd(data.x, data.y, data.id, data.text);
+        if (data.id != self.active_brick_id) {
+            console.log('Got add broadcast for brick: ' + data.id + ', x: ' + data.x + ', y: ' + data.y);
+            self.bbrickAdd(data.x, data.y, data.id, data.text);
+        }
     });
 
     this.websocket.on('bbrickupdate', function(data) {
@@ -140,7 +154,7 @@ window.WOT.Wall.prototype = {
             },
             stop: function () {
                 this.focus();
-                self.active_brick_id = '0';
+                // self.active_brick_id = '0';
             }
         });
 
@@ -190,7 +204,7 @@ window.WOT.Wall.prototype = {
             },
             stop: function () {
                 this.focus();
-                self.active_brick_id = '0';
+                // self.active_brick_id = '0';
             }
         });
 
